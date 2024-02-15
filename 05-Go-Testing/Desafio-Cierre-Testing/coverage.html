@@ -1,0 +1,382 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>handler: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">app/internal/handler/products_default.go (100.0%)</option>
+				
+				<option value="file1">app/internal/repository/products_map.go (100.0%)</option>
+				
+				<option value="file2">app/internal/repository/products_map_mock.go (0.0%)</option>
+				
+				<option value="file3">app/platform/web/request/json.go (100.0%)</option>
+				
+				<option value="file4">app/platform/web/response/error.go (84.6%)</option>
+				
+				<option value="file5">app/platform/web/response/json.go (100.0%)</option>
+				
+				<option value="file6">app/platform/web/response/text.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package handler
+
+import (
+        "app/internal"
+        "app/platform/web/response"
+        "net/http"
+        "strconv"
+)
+
+// NewProductsDefault returns a new ProductsDefault.
+func NewProductsDefault(rp internal.RepositoryProducts) *ProductsDefault <span class="cov8" title="1">{
+        return &amp;ProductsDefault{
+                rp: rp,
+        }
+}</span>
+
+// ProductsDefault is an struct that contains handlers for products.
+type ProductsDefault struct {
+        // rp is the repository of products.
+        rp internal.RepositoryProducts
+}
+
+// ProductJSON is an struct that represents a product in JSON format.
+type ProductJSON struct {
+        Id          int     `json:"id"`
+        Description string  `json:"description"`
+        Price       float64 `json:"price"`
+        SellerId    int     `json:"seller_id"`
+}
+
+// Get returns a list of products that match the query.
+func (h *ProductsDefault) Get() http.HandlerFunc <span class="cov8" title="1">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
+                // request
+                // - query
+                var query internal.ProductQuery
+                if r.URL.Query().Has("id") </span><span class="cov8" title="1">{
+                        var err error
+                        query.Id, err = strconv.Atoi(r.URL.Query().Get("id"))
+                        if err != nil </span><span class="cov8" title="1">{
+                                response.Error(w, http.StatusBadRequest, "invalid id")
+                                return
+                        }</span>
+                }
+
+                // process
+                // - search products
+                <span class="cov8" title="1">p, err := h.rp.SearchProducts(query)
+                if err != nil </span><span class="cov8" title="1">{
+                        response.Error(w, http.StatusInternalServerError, "internal error")
+                        return
+                }</span>
+
+                // response
+                // - serialize products
+                <span class="cov8" title="1">data := make(map[int]ProductJSON)
+                for k, v := range p </span><span class="cov8" title="1">{
+                        data[k] = ProductJSON{
+                                Id:          v.Id,
+                                Description: v.Description,
+                                Price:       v.Price,
+                                SellerId:    v.SellerId,
+                        }
+                }</span>
+                <span class="cov8" title="1">response.JSON(w, http.StatusOK, map[string]any{
+                        "message": "success",
+                        "data":    data,
+                })</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package repository
+
+import "app/internal"
+
+// NewProductsMap returns a new ProductsMap.
+func NewProductsMap(db map[int]internal.Product) *ProductsMap <span class="cov8" title="1">{
+        // default values
+        defaultDb := make(map[int]internal.Product)
+        if db != nil </span><span class="cov8" title="1">{
+                defaultDb = db
+        }</span>
+
+        <span class="cov8" title="1">return &amp;ProductsMap{
+                db: defaultDb,
+        }</span>
+}
+
+// ProductAttributes is an struct that implements the RepositoryProducts interface.
+type ProductsMap struct {
+        // db is the map of products.
+        db map[int]internal.Product
+}
+
+// SearchProducts returns a list of products that match the query.
+func (r *ProductsMap) SearchProducts(query internal.ProductQuery) (p map[int]internal.Product, err error) <span class="cov8" title="1">{
+        p = make(map[int]internal.Product)
+
+        // search the products
+        for k, v := range r.db </span><span class="cov8" title="1">{
+                // check if each query field is set
+                if query.Id &gt; 0 &amp;&amp; query.Id != v.Id </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // add the product to the result
+                <span class="cov8" title="1">p[k] = v</span>
+        }
+
+        <span class="cov8" title="1">return</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package repository
+
+import (
+        "app/internal"
+
+        "github.com/stretchr/testify/mock"
+)
+
+func NewProductsMapMock() *Mock <span class="cov0" title="0">{
+        return &amp;Mock{}
+}</span>
+
+type Mock struct {
+        mock.Mock
+        FunSearchProducts func(query internal.ProductQuery) (p map[int]internal.Product, err error)
+}
+
+func (m *Mock) SearchProducts(query internal.ProductQuery) (p map[int]internal.Product, err error) <span class="cov0" title="0">{
+
+        output := m.Called(query)
+
+        if m.FunSearchProducts != nil </span><span class="cov0" title="0">{
+                return m.FunSearchProducts(query)
+        }</span>
+
+        <span class="cov0" title="0">return output.Get(0).(map[int]internal.Product), output.Error(1)</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package request
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "net/http"
+)
+
+// JSON decodes json from request body to ptr
+var (
+        // ErrRequestContentTypeNotJSON is used when the request content type is not application/json.
+        ErrRequestContentTypeNotJSON = errors.New("request content type is not application/json")
+        // ErrRequestJSONInvalid is used when the request json is invalid.
+        ErrRequestJSONInvalid = errors.New("request json invalid")
+)
+
+// JSON decodes json from request body to ptr
+func JSON(r *http.Request, ptr any) (err error) <span class="cov8" title="1">{
+        // check content type
+        if r.Header.Get("Content-Type") != "application/json" </span><span class="cov8" title="1">{
+                err = ErrRequestContentTypeNotJSON
+                return
+        }</span>
+
+        // get body
+        <span class="cov8" title="1">err = json.NewDecoder(r.Body).Decode(ptr)
+        if err != nil </span><span class="cov8" title="1">{
+                err = fmt.Errorf("%w. %v", ErrRequestJSONInvalid, err)
+                return
+        }</span>
+
+        <span class="cov8" title="1">return</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">package response
+
+import (
+        "encoding/json"
+        "fmt"
+        "net/http"
+)
+
+type errorResponse struct {
+        Status  string `json:"status"`
+        Message string `json:"message"`
+}
+
+func Error(w http.ResponseWriter, statusCode int, message string) <span class="cov8" title="1">{
+        // default status code
+        defaultStatusCode := http.StatusInternalServerError
+        // check if status code is valid
+        if statusCode &gt; 299 &amp;&amp; statusCode &lt; 600 </span><span class="cov8" title="1">{
+                defaultStatusCode = statusCode
+        }</span>
+
+        // response
+        <span class="cov8" title="1">body := errorResponse{
+                Status:  http.StatusText(defaultStatusCode),
+                Message: message,
+        }
+        bytes, err := json.Marshal(body)
+        if err != nil </span><span class="cov0" title="0">{
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+        }</span>
+
+        // write response
+        <span class="cov8" title="1">w.WriteHeader(defaultStatusCode)
+        w.Header().Set("Content-Type", "application/json")
+        w.Write(bytes)</span>
+}
+
+func Errorf(w http.ResponseWriter, statusCode int, format string, args ...interface{}) <span class="cov8" title="1">{
+        message := fmt.Sprintf(format, args...)
+        Error(w, statusCode, message)
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">package response
+
+import (
+        "encoding/json"
+        "net/http"
+)
+
+// JSON writes json response
+func JSON(w http.ResponseWriter, code int, body any) <span class="cov8" title="1">{
+        // check body
+        if body == nil </span><span class="cov8" title="1">{
+                w.WriteHeader(code)
+                return
+        }</span>
+        
+        // marshal body
+        <span class="cov8" title="1">bytes, err := json.Marshal(body)
+        if err != nil </span><span class="cov8" title="1">{
+                // default error
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+        }</span>
+
+        // set header
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+
+        // set status code
+        w.WriteHeader(code)
+
+        // write body
+        w.Write(bytes)</span>
+}</pre>
+		
+		<pre class="file" id="file6" style="display: none">package response
+
+import "net/http"
+
+// Text writes text response
+func Text(w http.ResponseWriter, code int, body string) <span class="cov8" title="1">{
+        // set header
+        w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+        // set status code
+        w.WriteHeader(code)
+
+        // write body
+        w.Write([]byte(body))
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
