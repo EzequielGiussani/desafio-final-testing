@@ -47,6 +47,7 @@ func TestGet(t *testing.T) {
 		//assert
 		require.Equal(t, http.StatusOK, res.Code)
 		require.JSONEq(t, expectedBody, res.Body.String())
+		mockRepo.AssertExpectations(t)
 
 	})
 
@@ -72,6 +73,7 @@ func TestGet(t *testing.T) {
 		//assert
 		require.Equal(t, http.StatusOK, res.Code)
 		require.JSONEq(t, expectedBody, res.Body.String())
+		mockRepo.AssertExpectations(t)
 
 	})
 
@@ -97,6 +99,7 @@ func TestGet(t *testing.T) {
 		//assert
 		require.Equal(t, http.StatusInternalServerError, res.Code)
 		require.JSONEq(t, expectedBody, res.Body.String())
+		mockRepo.AssertExpectations(t)
 
 	})
 
@@ -121,6 +124,7 @@ func TestGet(t *testing.T) {
 		//assert
 		require.Equal(t, http.StatusBadRequest, res.Code)
 		require.JSONEq(t, expectedBody, res.Body.String())
+		mockRepo.AssertNotCalled(t, "SearchProducts")
 	})
 
 }
